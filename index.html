@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Валідатор та Редактор Фото на Закордонний Паспорт</title>
+    <style>
+        :root {
+            --primary: #0057b7;
+            --secondary: #ffd700;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --success: #22c55e;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #e2e8f0;
+            color: var(--dark);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .container { grid-template-columns: 1fr; }
+        }
+
+        header {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, var(--primary) 50%, #004494 50%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        header h1 { margin: 0; font-size: 24px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+        header p { margin: 5px 0 0; color: var(--secondary); font-weight: bold; }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        h2 { color: var(--primary); border-bottom: 2px solid var(--secondary); padding-bottom: 8px; margin-top: 0; }
+
+        /* Requirements styles */
+        .req-list { padding-left: 20px; }
+        .req-list li { margin-bottom: 10px; line-height: 1.5; }
+        
+        .dmsu-img {
+            width: 100%;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 1px solid #cbd5e1;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .dmsu-img:hover { transform: scale(1.02); }
+
+        /* Upload & Editor styles */
+        .upload-zone {
+            border: 3px dashed #cbd5e1;
+            padding: 30px;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            background: var(--light);
+            transition: all 0.2s;
+        }
+        .upload-zone:hover { border-color: var(--primary); background: #f1f5f9; }
+        
+        #fileInput { display: none; }
+
+        /* Cropper Area */
+        .editor-container {
+            display: none;
+            margin-top: 20px;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            width: 350px;
+            height: 450px; /* Пропорції 3.5 x 4.5 */
+            border: 2px solid var(--dark);
+            overflow: hidden;
+            background: #ccc;
+        }
+
+        #photoCanvas {
+            position: absolute;
+            cursor: move;
+        }
+
+        /* Трафарет поверх фото */
+        .overlay-mask {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="350" height="450" viewBox="0 0 350 450"><ellipse cx="175" cy="210" rx="90" ry="130" fill="none" stroke="%2322c55e" stroke-width="3" stroke-dasharray="5,5"/><line x1="0" y1="180" x2="350" y2="180" stroke="%23ef4444" stroke-width="2" stroke-dasharray="4,4"/><text x="10" y="175" fill="%23ef4444" font-size="12">Лінія очей</text><text x="110" y="70" fill="%2322c55e" font-size="12">Обличчя (70-80%)</text></svg>');
+        }
+
+        .controls {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: #004494; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-success:hover { background: #16a34a; }
+
+        .slider-group {
+            width: 100%;
+            margin-top: 10px;
+        }
+        .slider-group label { display: block; margin-bottom: 5px; font-size: 14px; }
+        .slider-group input { width: 100%; }
+
+        /* Checker style */
+        .checker-zone {
+            margin-top: 20px;
+            display: none;
+            background: var(--light);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 5px solid var(--primary);
+        }
+        .check-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Додаток для підготовки фото на закордонний паспорт України</h1>
+        <p>Спеціалізовано для дітей до 16 років (ГК Сан-Франциско / ДМСУ)</p>
+    </header>
+
+    <div class="card">
+        <h2>Вимоги Консульства (Сан-Франциско)</h2>
+        <ul class="req-list">
+            <li><strong>Кількість:</strong> 1 кольорова фотокартка.</li>
+            <li><strong>Розмір:</strong> 10х15 см (для сканування) або чітке цифрове фото. В результаті обрізки ми отримаємо пропорцію 3.5х4.5 см.</li>
+            <li><strong>Фон:</strong> Обов'язково <strong>білий фон</strong>.</li>
+            <li><strong>Якість:</strong> Без жодних доопрацювань фотошопом (крім кадрування), без лінз, що змінюють колір очей.</li>
+            <li><strong>Обличчя:</strong> Має займати 70-80% знімка. Погляд прямо, очі відкриті, рот закритий, нейтральний вираз.</li>
+        </ul>
+
+        <h2>Офіційний стандарт ДМСУ (натисніть для збільшення)</h2>
+        <a href="https://dmsu.gov.ua/assets/images/news/2019/11/6100-1.jpg" target="_blank" title="Відкрити оригінал схеми">
+            <img src="https://dmsu.gov.ua/assets/images/news/2019/11/6100-1.jpg" alt="Стандарти фото ДМСУ" class="dmsu-img">
+        </a>
+    </div>
+
+    <div class="card">
+        <h2>Обробити та перевірити фото</h2>
+        
+        <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
+            <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin:0 auto 10px; color: var(--primary);">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 002-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <p>Натисніть або перетягніть сюди фото дитини</p>
+            <span style="font-size:12px; color:#64748b;">(Файли JPEG/PNG)</span>
+        </div>
+        <input type="file" id="fileInput" accept="image/*">
+
+        <div class="checker-zone" id="checkerZone">
+            <h3>Інтерактивний чек-ліст фото:</h3>
+            <div class="check-item"><input type="checkbox" id="chkBg" checked> <label for="chkBg">Фон є однорідним та виключно білим</label></div>
+            <div class="check-item"><input type="checkbox" id="chkEyes" checked> <label for="chkEyes">Очі відкриті, дивляться в об'єктив, лінії очей паралельні підлозі</label></div>
+            <div class="check-item"><input type="checkbox" id="chkMouth" checked> <label for="chkMouth">Рот повністю закритий (нейтральний вираз обличчя)</label></div>
+            <div class="check-item"><input type="checkbox" id="chkShadow" checked> <label for="chkShadow">Відсутні тіні на обличчі та на фоні за дитиною</label></div>
+        </div>
+
+        <div class="editor-container" id="editorContainer">
+            <h3>Кадрування під стандарт паспорта</h3>
+            <p style="font-size: 13px; text-align: center; margin: 0 0 10px;">
+                Перетягуйте фото мишкою та змінюйте повзунком масштаб так, щоб обличчя вписалося в зелений овал, а очі були на рівні червоної лінії.
+            </p>
+            
+            <div class="canvas-wrapper">
+                <canvas id="photoCanvas" width="350" height="450"></canvas>
+                <div class="overlay-mask"></div>
+            </div>
+
+            <div class="slider-group">
+                <label for="scaleSlider">Масштаб фото:</label>
+                <input type="range" id="scaleSlider" min="0.1" max="3" step="0.01" value="1">
+            </div>
+
+            <div class="controls">
+                <button class="btn btn-primary" id="rotateBtn">Повернути на 90°</button>
+                <button class="btn btn-success" id="downloadBtn">Завантажити готове фото</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const fileInput = document.getElementById('fileInput');
+    const editorContainer = document.getElementById('editorContainer');
+    const checkerZone = document.getElementById('checkerZone');
+    const canvas = document.getElementById('photoCanvas');
+    const ctx = canvas.getContext('2d');
+    const scaleSlider = document.getElementById('scaleSlider');
+    const rotateBtn = document.getElementById('rotateBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    let img = new Image();
+    let imgScale = 1;
+    let imgX = 0;
+    let imgY = 0;
+    let rotation = 0;
+    let isDragging = false;
+    let startX, startY;
+
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            img.onload = function() {
+                // Ініціалізація початкових координат по центру канвасу
+                resetEditor();
+                editorContainer.style.display = 'flex';
+                checkerZone.style.display = 'block';
+                draw();
+            }
+            img.src = event.target.result;
+        }
+        reader.readAsDataURL(file);
+    });
+
+    function resetEditor() {
+        rotation = 0;
+        imgScale = Math.max(350 / img.width, 450 / img.height);
+        scaleSlider.value = imgScale;
+        scaleSlider.min = imgScale * 0.5;
+        scaleSlider.max = imgScale * 4;
+        imgX = (350 - img.width * imgScale) / 2;
+        imgY = (450 - img.height * imgScale) / 2;
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.save();
+        
+        // Зміщення для трансформацій (масштаб та поворот відносно центру маніпуляцій)
+        ctx.translate(imgX + (img.width * imgScale) / 2, imgY + (img.height * imgScale) / 2);
+        ctx.rotate((rotation * Math.PI) / 180);
+        ctx.scale(imgScale, imgScale);
+        
+        // Малюємо зображення зі зміщенням назад до його верхнього лівого кута
+        ctx.drawImage(img, -img.width / 2, -img.height / 2);
+        ctx.restore();
+    }
+
+    // Повзунок масштабу
+    scaleSlider.addEventListener('input', function() {
+        const oldScale = imgScale;
+        imgScale = parseFloat(this.value);
+        
+        // Коригуємо координати X та Y, щоб масштабування відбувалося відносно центру
+        imgX -= (img.width * imgScale - img.width * oldScale) / 2;
+        imgY -= (img.height * imgScale - img.height * oldScale) / 2;
+        draw();
+    });
+
+    // Кнопка повороту зображення
+    rotateBtn.addEventListener('click', function() {
+        rotation = (rotation + 90) % 360;
+        draw();
+    });
+
+    // Логіка перетягування (Drag & Drop всередині Canvas)
+    canvas.addEventListener('mousedown', function(e) {
+        isDragging = true;
+        startX = e.clientX - imgX;
+        startY = e.clientY - imgY;
+    });
+
+    window.addEventListener('mouseup', () => isDragging = false);
+    
+    canvas.addEventListener('mousemove', function(e) {
+        if (!isDragging) return;
+        imgX = e.clientX - startX;
+        imgY = e.clientY - startY;
+        draw();
+    });
+
+    // Підтримка тач-скрінів для мобільних пристроїв
+    canvas.addEventListener('touchstart', function(e) {
+        if (e.touches.length === 1) {
+            isDragging = true;
+            startX = e.touches[0].clientX - imgX;
+            startY = e.touches[0].clientY - imgY;
+        }
+    });
+    canvas.addEventListener('touchmove', function(e) {
+        if (!isDragging || e.touches.length !== 1) return;
+        imgX = e.touches[0].clientX - startX;
+        imgY = e.touches[0].clientY - startY;
+        draw();
+    });
+    canvas.addEventListener('touchend', () => isDragging = false);
+
+    // Завантаження фінального результату
+    downloadBtn.addEventListener('click', function() {
+        // Створюємо тимчасове посилання для сканування/скачування файлу
+        const link = document.createElement('a');
+        link.download = 'photo_passport_35x45.jpg';
+        // Конвертуємо поточний стан канвасу (без SVG трафарету) у JPEG високої якості
+        link.href = canvas.toDataURL('image/jpeg', 0.95);
+        link.click();
+    });
+</script>
+
+</body>
+</html>
