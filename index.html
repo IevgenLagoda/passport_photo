@@ -4,301 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Валідатор та Редактор Фото на Закордонний Паспорт (v3)</title>
-    <style>
-      :root {
-        --primary: #0057b7;
-        --secondary: #ffd700;
-        --dark: #1e293b;
-        --light: #f8fafc;
-        --success: #22c55e;
-        --danger: #ef4444;
-        --accent: #3b82f6;
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      body {
-        font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        background-color: #e2e8f0;
-        color: var(--dark);
-        margin: 0;
-        padding: 20px;
-      }
-
-      .container {
-        max-width: 1200px;
-        margin: 0 auto;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
-      }
-
-      @media (max-width: 900px) {
-        .container {
-          grid-template-columns: 1fr;
-        }
-      }
-
-      header {
-        grid-column: 1 / -1;
-        background: linear-gradient(135deg, var(--primary) 50%, #004494 50%);
-        color: white;
-        padding: 25px;
-        border-radius: 12px;
-        text-align: center;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-      }
-
-      header h1 {
-        margin: 0;
-        font-size: 26px;
-        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-      }
-      header p {
-        margin: 8px 0 0;
-        color: var(--secondary);
-        font-weight: bold;
-        font-size: 16px;
-      }
-
-      .card {
-        background: white;
-        padding: 25px;
-        border-radius: 12px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-      }
-
-      h2 {
-        color: var(--primary);
-        border-bottom: 2px solid var(--secondary);
-        padding-bottom: 8px;
-        margin-top: 0;
-      }
-      h3 {
-        color: var(--dark);
-        margin-top: 15px;
-        margin-bottom: 10px;
-      }
-
-      /* Requirements styles */
-      .req-list {
-        padding-left: 20px;
-      }
-      .req-list li {
-        margin-bottom: 12px;
-        line-height: 1.6;
-        font-size: 15px;
-      }
-
-      .badge {
-        background-color: #ebf8ff;
-        color: #2b6cb0;
-        padding: 3px 8px;
-        border-radius: 4px;
-        font-weight: bold;
-        font-size: 13px;
-        border: 1px solid #bee3f8;
-        display: inline-block;
-        margin-top: 4px;
-      }
-
-      .dmsu-img {
-        width: 100%;
-        border-radius: 8px;
-        margin-top: 15px;
-        border: 1px solid #cbd5e1;
-        cursor: pointer;
-        transition: transform 0.2s;
-      }
-      .dmsu-img:hover {
-        transform: scale(1.01);
-      }
-
-      /* Upload & Editor styles */
-      .upload-zone {
-        border: 3px dashed #cbd5e1;
-        padding: 40px 20px;
-        text-align: center;
-        border-radius: 8px;
-        cursor: pointer;
-        background: var(--light);
-        transition: all 0.2s;
-      }
-      .upload-zone:hover {
-        border-color: var(--primary);
-        background: #f1f5f9;
-      }
-
-      #fileInput {
-        display: none;
-      }
-
-      /* Cropper Area */
-      .editor-container {
-        display: none;
-        margin-top: 25px;
-        flex-direction: column;
-        align-items: center;
-      }
-
-      .canvas-wrapper {
-        position: relative;
-        width: 350px;
-        height: 450px; /* Пропорції під кадрування 3.5 x 4.5 в межах картки 10х15 */
-        border: 3px solid var(--dark);
-        overflow: hidden;
-        background: #f1f5f9;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-      }
-
-      #photoCanvas {
-        position: absolute;
-        cursor: move;
-      }
-
-      /* Трафарет поверх фото */
-      .overlay-mask {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-        background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="350" height="450" viewBox="0 0 350 450"><ellipse cx="175" cy="205" rx="85" ry="125" fill="none" stroke="%2322c55e" stroke-width="3" stroke-dasharray="5,5"/><line x1="0" y1="175" x2="350" y2="175" stroke="%23ef4444" stroke-width="2" stroke-dasharray="4,4"/><text x="10" y="170" fill="%23ef4444" font-size="12" font-family="sans-serif" font-weight="bold">Лінія очей</text><text x="115" y="65" fill="%2322c55e" font-size="12" font-family="sans-serif" font-weight="bold">Обличчя (70-80%)</text></svg>');
-      }
-
-      .controls {
-        margin-top: 20px;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-        width: 100%;
-      }
-
-      .btn {
-        padding: 12px;
-        border: none;
-        border-radius: 6px;
-        font-weight: bold;
-        font-size: 14px;
-        cursor: pointer;
-        transition: all 0.2s;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-      }
-      .btn-primary {
-        background: var(--primary);
-        color: white;
-      }
-      .btn-primary:hover {
-        background: #004494;
-      }
-      .btn-success {
-        background: var(--success);
-        color: white;
-        grid-column: 1 / -1;
-        font-size: 16px;
-        padding: 14px;
-        margin-top: 5px;
-      }
-      .btn-success:hover {
-        background: #16a34a;
-      }
-      .btn-accent {
-        background: #fee2e2;
-        color: #991b1b;
-        border: 1px solid #fca5a5;
-      }
-      .btn-accent:hover {
-        background: #fca5a5;
-      }
-      .btn-auto {
-        background: #dbeafe;
-        color: #1e40af;
-        border: 1px solid #bfdbfe;
-        grid-column: 1 / -1;
-        font-size: 15px;
-      }
-      .btn-auto:hover {
-        background: #bfdbfe;
-      }
-
-      .slider-group {
-        width: 100%;
-        margin-top: 15px;
-        background: var(--light);
-        padding: 10px;
-        border-radius: 6px;
-      }
-      .slider-group label {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 5px;
-        font-size: 14px;
-        font-weight: 600;
-      }
-      .slider-group input {
-        width: 100%;
-      }
-
-      /* Checker style */
-      .checker-zone {
-        margin-top: 20px;
-        display: none;
-        background: #fffbeb;
-        padding: 15px;
-        border-radius: 8px;
-        border-left: 5px solid #d97706;
-      }
-      .check-item {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 8px;
-        font-size: 14px;
-      }
-
-      .header-link {
-        color: var(--secondary);
-        text-decoration: underline;
-        font-weight: bold;
-      }
-      .header-link:hover {
-        text-decoration: underline;
-      }
-      .check-item input {
-        width: 16px;
-        height: 16px;
-        cursor: pointer;
-      }
-      /* Logo in header */
-      .app-header {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-      }
-      .app-header .logo {
-        width: 84px;
-        height: auto;
-        display: block;
-        background: white;
-        padding: 5px;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      }
-      @media (max-width: 600px) {
-        .app-header {
-          gap: 10px;
-        }
-        .app-header .logo {
-          width: 60px;
-        }
-      }
-    </style>
+    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <div class="container">
@@ -314,9 +20,9 @@
             class="logo"
           />
         </a>
-        <div>
+        <div>~
           <h1>
-            Додаток для підготовки та валідації фото на закордонний паспорт
+            <strong>Неофіційний</strong> додаток для підготовки та валідації фото на закордонний паспорт
             України
           </h1>
           <p>
@@ -405,7 +111,7 @@
             ></path>
           </svg>
           <p style="margin: 0; font-weight: bold">
-            Оберіть або перетягніть фото дитини
+            Оберіть або перетягніть фото
           </p>
           <span
             style="
@@ -456,7 +162,7 @@
 
           <!-- Автоматичне регулювання -->
           <button class="btn btn-auto" id="autoAdjustBtn">
-            ✨ Автоматичне інтелектуальне корегування (AI Fit)
+            ✨ Автоматичне інтелектуальне корегування
           </button>
 
           <div class="slider-group">
